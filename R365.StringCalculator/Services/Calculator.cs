@@ -1,6 +1,7 @@
 ﻿using R365.StringCalculator.Interfaces;
 using R365.StringCalculator.Models;
 using System;
+using System.Linq;
 
 namespace R365.StringCalculator.Services
 {
@@ -24,8 +25,8 @@ namespace R365.StringCalculator.Services
         public CalculationResult Calculate(string input)
         {
             VerifyParser();
-            Tuple<int, int> numbers = inputParser.ParseNumbers(input);
-            return new CalculationResult {Result= numbers.Item1 + numbers.Item2 };
+            var numbers = inputParser.ParseNumbers(input);
+            return new CalculationResult {Result= numbers.Sum() };
         }
 
         private void VerifyParser()
