@@ -1,4 +1,5 @@
-﻿using System;
+﻿using R365.StringCalculator.Services;
+using System;
 
 namespace R365.StringCalculator
 {
@@ -6,7 +7,19 @@ namespace R365.StringCalculator
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            try
+            {
+                Console.Write("Enter input numbers:");
+                string input = Console.ReadLine();
+                Calculator calc = new Calculator(new InputParser());
+                var result = calc.Calculate(input);
+                Console.WriteLine($"Result: {result.Result}");
+                Console.ReadLine();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
         }
     }
 }
