@@ -35,9 +35,18 @@ namespace R365.StringCalculator.Tests
         {
             var parser = new InputParser();
             var result = parser.ParseNumbers(input);
-            Assert.Equal(expectedNumbers.Length, result.Count());
-            Assert.All(result, x => expectedNumbers.Contains(x));
+            TestHelpers.CollectionsAreEqual(expectedNumbers, result);
         }
 
+        [Theory]
+        [InlineData(",\n", 0, 0, 0)]
+        [InlineData("1\n2", 1, 2)]
+        [InlineData("1\n2,3", 1, 2, 3)]
+        public void ParseNumbers_UseAlternativeNewLineDelimeter_ReturnCollectionWithCorrectNumbers(string input, params int[] expectedNumbers)
+        {
+            var parser = new InputParser();
+            var result = parser.ParseNumbers(input);
+            TestHelpers.CollectionsAreEqual(expectedNumbers, result);
+        }
     }
 }

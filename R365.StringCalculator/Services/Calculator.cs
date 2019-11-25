@@ -8,7 +8,7 @@ namespace R365.StringCalculator.Services
     /// <summary>
     /// Contains methods for calculating arithmetic operations for values provided in a string
     /// </summary>
-    public class Calculator
+    public class Calculator : ICalculator
     {
         private readonly IInputParser inputParser;
 
@@ -26,7 +26,7 @@ namespace R365.StringCalculator.Services
         {
             VerifyParser();
             var numbers = inputParser.ParseNumbers(input);
-            return new CalculationResult {Result= numbers.Sum() };
+            return new CalculationResult { Result = numbers.Sum() };
         }
 
         private void VerifyParser()

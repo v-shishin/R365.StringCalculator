@@ -1,4 +1,5 @@
-﻿using R365.StringCalculator.Interfaces;
+﻿using R365.StringCalculator.Constants;
+using R365.StringCalculator.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -6,7 +7,7 @@ namespace R365.StringCalculator.Services
 {
     public class InputParser : IInputParser
     {
-        const char DEFAULT_DELIMITER = ',';
+        readonly char[] DELIMETERS = new char[] { InputDelimeters.DEFAULT_DELIMITER, InputDelimeters.NEWLINE_DELIMETER };
 
         public IEnumerable<int> ParseNumbers(string inputStr)
         {
@@ -17,7 +18,7 @@ namespace R365.StringCalculator.Services
             }
 
             return inputStr
-                .Split(DEFAULT_DELIMITER)
+                .Split(DELIMETERS)
                 .Select(x => ConvertToNumber(x));
         }
 
