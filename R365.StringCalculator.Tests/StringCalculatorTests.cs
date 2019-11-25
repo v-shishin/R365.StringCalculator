@@ -10,6 +10,8 @@ namespace R365.StringCalculator.Tests
 {
     public class StringCalculatorTests
     {
+        const int MAX_ALLOWED_NUMBER = 1000;
+
         [Fact]
         public void Calculate_InputParserNull_ThrowsArgumentNullException()
         {
@@ -20,9 +22,10 @@ namespace R365.StringCalculator.Tests
         }
 
         [Theory]
-        [InlineData(int.MaxValue)]
         [InlineData(0)]
         [InlineData(20)]
+        //Maximum Allowed number
+        [InlineData(MAX_ALLOWED_NUMBER)]
         public void Calculate_SingleNumber_ReturnsSameNumber(int val)
         {
             var inputParserStub = new Mock<IInputParser>();
@@ -38,6 +41,8 @@ namespace R365.StringCalculator.Tests
         [InlineData(0, 0)]
         [InlineData(3, 4)]
         [InlineData(3, 4, 5, 6, 7)]
+        //Include Maximum Allowed number
+        [InlineData(MAX_ALLOWED_NUMBER, 4, 5, 6, 7)]
         public void Calculate_TwoOrMoreNumbers_ReturnsCorrectSum(params int[] numbers)
         {
             var inputParserStub = new Mock<IInputParser>();
@@ -47,18 +52,6 @@ namespace R365.StringCalculator.Tests
             var result = calc.Calculate(It.IsAny<string>());
 
             Assert.Equal(numbers.Sum(), result.Result);
-        }
-
-
-        [Theory]
-        [InlineData(int.MaxValue, 1)]
-        public void Calculate_LargeNumbers_ThrowsOverflowException(params int[] numbers)
-        {
-            var inputParserStub = new Mock<IInputParser>();
-            inputParserStub.Setup(x => x.ParseNumbers(It.IsAny<string>())).Returns(numbers);
-            var calc = new Calculator(inputParserStub.Object);
-
-            OverflowException ex = Assert.Throws<OverflowException>(() => calc.Calculate(null));
         }
 
         [Theory]
@@ -81,6 +74,31 @@ namespace R365.StringCalculator.Tests
             ApplicationException ex = Assert.Throws<ApplicationException>(() => calc.Calculate(null));
 
             Assert.Equal(expectedMessage, ex.Message);
+        }
+
+        [Theory]
+        [InlineData(1001)]
+        [InlineData(1, 1001)]
+        [InlineData(1, 2, 1002, 3, 1003)]
+        [InlineData(int.MaxValue, int.MaxValue)]
+        public void Calculate_NumbersMoreThanMaxAllowed_Excluded(params int[] numbers)
+        {
+            var inputParserStub = new Mock<IInputParser>();
+            inputParserStub.Setup(x => x.ParseNumbers(It.IsAny<string>())).Returns(numbers);
+            var calc = new Calculator(inputParserStub.Object);
+
+            int expectedSum = 0;
+            for (int i = 0; i < numbers.Length; i++)
+            {
+                if (numbers[i] <= MAX_ALLOWED_NUMBER)
+                {
+                    expectedSum += numbers[i];
+                }
+            }
+
+            var result = calc.Calculate(It.IsAny<string>());
+
+            Assert.Equal(expectedSum, result.Result);
         }
 
     }

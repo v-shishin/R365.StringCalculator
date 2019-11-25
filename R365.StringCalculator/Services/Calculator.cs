@@ -13,6 +13,7 @@ namespace R365.StringCalculator.Services
     public class Calculator : ICalculator
     {
         private readonly IInputParser inputParser;
+        private const int MAX_ALLOWED_NUMBER = 1000;
 
         public Calculator(IInputParser inputParser)
         {
@@ -29,7 +30,10 @@ namespace R365.StringCalculator.Services
             VerifyParser();
             var numbers = inputParser.ParseNumbers(input);
             VerifyNonNegativeNumbers(numbers);
-            return new CalculationResult { Result = numbers.Sum() };
+            int sum = numbers
+                .Where(x => x <= MAX_ALLOWED_NUMBER)
+                .Sum();
+            return new CalculationResult { Result = sum };
         }
 
         private static void VerifyNonNegativeNumbers(IEnumerable<int> numbers)
