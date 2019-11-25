@@ -20,7 +20,6 @@ namespace R365.StringCalculator.Tests
         }
 
         [Theory]
-        [InlineData(int.MinValue)]
         [InlineData(int.MaxValue)]
         [InlineData(0)]
         [InlineData(20)]
@@ -37,9 +36,6 @@ namespace R365.StringCalculator.Tests
 
         [Theory]
         [InlineData(0, 0)]
-        [InlineData(-3, -4)]
-        [InlineData(-3, 4)]
-        [InlineData(3, -4)]
         [InlineData(3, 4)]
         [InlineData(3, 4, 5, 6, 7)]
         public void Calculate_TwoOrMoreNumbers_ReturnsCorrectSum(params int[] numbers)
@@ -55,15 +51,36 @@ namespace R365.StringCalculator.Tests
 
 
         [Theory]
-        [InlineData(int.MinValue, -1)]
         [InlineData(int.MaxValue, 1)]
-        public void Calculate_LargeOrSmallNumbers_ThrowsOverflowException(params int[] numbers)
+        public void Calculate_LargeNumbers_ThrowsOverflowException(params int[] numbers)
         {
             var inputParserStub = new Mock<IInputParser>();
             inputParserStub.Setup(x => x.ParseNumbers(It.IsAny<string>())).Returns(numbers);
             var calc = new Calculator(inputParserStub.Object);
 
             OverflowException ex = Assert.Throws<OverflowException>(() => calc.Calculate(null));
+        }
+
+        [Theory]
+        //single negative number
+        [InlineData(-1)]
+        //several negative numbers
+        [InlineData(-1,-2)]
+        //mixed positive and negative numbers
+        [InlineData(1, -2, 3, -4)]
+        public void Calculate_SomeNumbersAreNegative_ThrowsException(params int[] numbers)
+        {
+            var inputParserStub = new Mock<IInputParser>();
+            inputParserStub.Setup(x => x.ParseNumbers(It.IsAny<string>())).Returns(numbers);
+
+            string expectedMessage = "Negative numbers are not supported. Entered the following negative numbers: ";
+            expectedMessage+=string.Join(", ", numbers.Where(x => x < 0));
+
+            var calc = new Calculator(inputParserStub.Object);
+
+            ApplicationException ex = Assert.Throws<ApplicationException>(() => calc.Calculate(null));
+
+            Assert.Equal(expectedMessage, ex.Message);
         }
 
     }
