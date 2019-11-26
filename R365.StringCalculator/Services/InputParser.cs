@@ -1,5 +1,6 @@
 ﻿using R365.StringCalculator.Constants;
 using R365.StringCalculator.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -8,14 +9,20 @@ namespace R365.StringCalculator.Services
 {
     public class InputParser : IInputParser
     {
-        readonly static char[] DELIMETERS = new char[] { InputDelimeters.DEFAULT_DELIMITER, InputDelimeters.NEWLINE_DELIMETER };
+        readonly static string[] DELIMETERS = new string[] { InputDelimeters.DEFAULT_DELIMITER.ToString(), InputDelimeters.NEWLINE_DELIMETER.ToString() };
 
         const string DELIMETER_GROUP_NAME = "delimeter";
         const string INPUT_NUMBERS_GROUP_NAME = "input";
+
         /// <summary>
         /// Regular expression representing input string in the format "//{single_char_delimiter}\n{numbers}"
         /// </summary>
-        private static readonly Regex INPUT_PARSING_REGEXP = new Regex("^//(?<"+ DELIMETER_GROUP_NAME + ">.)\n(?<"+ INPUT_NUMBERS_GROUP_NAME + ">.+)", RegexOptions.Singleline);
+        private static readonly Regex INPUT_PARSING_REGEXP_SINGLE_CHAR_DELIMETER = new Regex("^//(?<" + DELIMETER_GROUP_NAME + ">.)\n(?<" + INPUT_NUMBERS_GROUP_NAME + ">.+)", RegexOptions.Singleline);
+
+        /// <summary>
+        /// Regular expression representing input string in the format "//[{multiple_characters_delimiter}]\n{numbers}"
+        /// </summary>
+        private static readonly Regex INPUT_PARSING_REGEXP_MANY_CHARS_DELIMETER = new Regex("^//\\[(?<" + DELIMETER_GROUP_NAME + ">.+)\\]\n(?<" + INPUT_NUMBERS_GROUP_NAME + ">.+)", RegexOptions.Singleline);
 
         public IEnumerable<int> ParseNumbers(string inputStr)
         {
@@ -26,10 +33,10 @@ namespace R365.StringCalculator.Services
             }
 
             PreParsedInput parsedInput = PreParseInput(inputStr);
-            char[] delimeters = GetAllDelimeters(parsedInput.CustomDelimeter);
+            string[] delimeters = GetAllDelimeters(parsedInput.CustomDelimeter);
 
             return parsedInput.NumbersString
-                .Split(delimeters)
+                .Split(delimeters, StringSplitOptions.None)
                 .Select(x => ConvertToNumber(x));
         }
 
@@ -38,28 +45,36 @@ namespace R365.StringCalculator.Services
             return int.TryParse(str, out int result) ? result : 0;
         }
 
-        private static char[] GetAllDelimeters(char? customDelimeter)
+        private static string[] GetAllDelimeters(string customDelimeter)
         {
-            if (!customDelimeter.HasValue)
+            if (string.IsNullOrEmpty(customDelimeter))
             {
                 return DELIMETERS;
             }
-            return DELIMETERS.Append(customDelimeter.Value).ToArray();
+            return DELIMETERS.Append(customDelimeter).ToArray();
         }
 
         private static PreParsedInput PreParseInput(string inputStr)
         {
             var result = new PreParsedInput();
-            Match match = INPUT_PARSING_REGEXP.Match(inputStr);
-            if (match.Success)
+            Match matchSingleCharacterDelimeter = INPUT_PARSING_REGEXP_SINGLE_CHAR_DELIMETER.Match(inputStr);
+            if (matchSingleCharacterDelimeter.Success)
             {
-                // Custom delimeter is a single character
-                result.CustomDelimeter = match.Groups[DELIMETER_GROUP_NAME].Value[0];
-                result.NumbersString = match.Groups[INPUT_NUMBERS_GROUP_NAME].Value;
+                result.CustomDelimeter = matchSingleCharacterDelimeter.Groups[DELIMETER_GROUP_NAME].Value;
+                result.NumbersString = matchSingleCharacterDelimeter.Groups[INPUT_NUMBERS_GROUP_NAME].Value;
             }
             else
             {
-                result.NumbersString = inputStr;
+                Match matchManyCharacterDelimeter = INPUT_PARSING_REGEXP_MANY_CHARS_DELIMETER.Match(inputStr);
+                if (matchManyCharacterDelimeter.Success)
+                {
+                    result.CustomDelimeter = matchManyCharacterDelimeter.Groups[DELIMETER_GROUP_NAME].Value;
+                    result.NumbersString = matchManyCharacterDelimeter.Groups[INPUT_NUMBERS_GROUP_NAME].Value;
+                }
+                else
+                {
+                    result.NumbersString = inputStr;
+                }
             }
             return result;
         }
@@ -69,7 +84,7 @@ namespace R365.StringCalculator.Services
         /// </summary>
         class PreParsedInput
         {
-            public char? CustomDelimeter { get; set; }
+            public string CustomDelimeter { get; set; }
             public string NumbersString { get; set; }
         }
     }
