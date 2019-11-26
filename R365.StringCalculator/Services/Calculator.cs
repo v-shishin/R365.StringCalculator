@@ -30,10 +30,11 @@ namespace R365.StringCalculator.Services
             VerifyParser();
             var numbers = inputParser.ParseNumbers(input);
             VerifyNonNegativeNumbers(numbers);
-            int sum = numbers
-                .Where(x => x <= MAX_ALLOWED_NUMBER)
-                .Sum();
-            return new CalculationResult { Result = sum };
+            // set to zero numbers greater than max allowed
+            var lessThanMaxNumbers = numbers.Select(x => x <= MAX_ALLOWED_NUMBER ? x : 0).ToList();
+            int sum = lessThanMaxNumbers.Sum();
+            string formula = string.Join('+', lessThanMaxNumbers) + "=" + sum.ToString();
+            return new CalculationResult { Result = sum, Formula = formula };
         }
 
         private static void VerifyNonNegativeNumbers(IEnumerable<int> numbers)

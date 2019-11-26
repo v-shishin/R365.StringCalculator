@@ -5,6 +5,7 @@ using Moq;
 using R365.StringCalculator.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace R365.StringCalculator.Tests
 {
@@ -101,5 +102,32 @@ namespace R365.StringCalculator.Tests
             Assert.Equal(expectedSum, result.Result);
         }
 
+        [Theory]
+        [InlineData(0)] // single number
+        [InlineData(1, 2, 3)] // many numbers
+        [InlineData(1, MAX_ALLOWED_NUMBER + 1, 3, MAX_ALLOWED_NUMBER + 2)] // some numbers are greater than max allowed
+        public void Calculate_ReturnsCorrectFormula(params int[] numbers)
+        {
+            var inputParserStub = new Mock<IInputParser>();
+            inputParserStub.Setup(x => x.ParseNumbers(It.IsAny<string>())).Returns(numbers);
+            var calc = new Calculator(inputParserStub.Object);
+            
+            //calculate formula
+            StringBuilder formulaBuilder = new StringBuilder();
+            for (int i = 0; i < numbers.Length; i++)
+            {
+                int num = numbers[i] <= MAX_ALLOWED_NUMBER ? numbers[i] : 0;
+                formulaBuilder.Append(num);
+                formulaBuilder.Append("+");
+            }
+            //replace last "+" with "="
+            formulaBuilder[formulaBuilder.Length - 1] = '=';
+
+            var result = calc.Calculate(It.IsAny<string>());
+            
+            //append calculation result to expected formula
+            formulaBuilder.Append(result.Result);
+            Assert.Equal(formulaBuilder.ToString(), result.Formula); ;
+        }
     }
 }

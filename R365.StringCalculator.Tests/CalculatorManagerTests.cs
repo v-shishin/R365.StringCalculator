@@ -66,6 +66,21 @@ namespace R365.StringCalculator.Tests
         }
 
         [Fact]
+        public void Execute_CalculatorComputesResult_PrintsFormula()
+        {
+            string formula = "1+2+3=6";
+            var calcStub = new Mock<ICalculator>();
+            calcStub.Setup(x => x.Calculate(It.IsAny<string>())).Returns(new CalculationResult { Formula= formula });
+            var consoleMock = new ConsoleWrapperFake();
+            string expectedResultMessage = $"Formula: {formula}";
+
+            var calcManager = new CalculatorManager(calcStub.Object, consoleMock);
+            calcManager.Execute();
+
+            Assert.Contains(expectedResultMessage, consoleMock.WriteLog);
+        }
+
+        [Fact]
         public void Execute_CalculatorThrowsException_PrintsErrorMessage()
         {
             string errorMessage = "Test message";
@@ -126,6 +141,5 @@ namespace R365.StringCalculator.Tests
 
             calcMock.Verify(x => x.Calculate(input), Times.Once());
         }
-
     }
 }

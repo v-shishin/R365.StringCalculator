@@ -33,6 +33,7 @@ namespace R365.StringCalculator.Services
                 var result = calculator.Calculate(input);
 
                 console.WriteLine($"Result: {result.Result}");
+                console.WriteLine($"Formula: {result.Formula}");
             }
             catch (Exception ex)
             {
