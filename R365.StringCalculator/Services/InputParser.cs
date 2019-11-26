@@ -20,9 +20,9 @@ namespace R365.StringCalculator.Services
         private static readonly Regex INPUT_PARSING_REGEXP_SINGLE_CHAR_DELIMETER = new Regex("^//(?<" + DELIMETER_GROUP_NAME + ">.)\n(?<" + INPUT_NUMBERS_GROUP_NAME + ">.+)", RegexOptions.Singleline);
 
         /// <summary>
-        /// Regular expression representing input string in the format "//[{multiple_characters_delimiter}]\n{numbers}"
+        /// Regular expression representing input string in the format "//[{delimiter1}][{delimiter2}]...\n{numbers}"
         /// </summary>
-        private static readonly Regex INPUT_PARSING_REGEXP_MANY_CHARS_DELIMETER = new Regex("^//\\[(?<" + DELIMETER_GROUP_NAME + ">.+)\\]\n(?<" + INPUT_NUMBERS_GROUP_NAME + ">.+)", RegexOptions.Singleline);
+        private static readonly Regex INPUT_PARSING_REGEXP_MANY_DELIMETERS = new Regex("^//(?<" + DELIMETER_GROUP_NAME + ">\\[.+\\])\n(?<" + INPUT_NUMBERS_GROUP_NAME + ">.+)", RegexOptions.Singleline);
 
         public IEnumerable<int> ParseNumbers(string inputStr)
         {
@@ -33,7 +33,7 @@ namespace R365.StringCalculator.Services
             }
 
             PreParsedInput parsedInput = PreParseInput(inputStr);
-            string[] delimeters = GetAllDelimeters(parsedInput.CustomDelimeter);
+            string[] delimeters = GetAllDelimeters(parsedInput.CustomDelimeters);
 
             return parsedInput.NumbersString
                 .Split(delimeters, StringSplitOptions.None)
@@ -45,13 +45,13 @@ namespace R365.StringCalculator.Services
             return int.TryParse(str, out int result) ? result : 0;
         }
 
-        private static string[] GetAllDelimeters(string customDelimeter)
+        private static string[] GetAllDelimeters(string[] customDelimeters)
         {
-            if (string.IsNullOrEmpty(customDelimeter))
+            if (customDelimeters == null)
             {
                 return DELIMETERS;
             }
-            return DELIMETERS.Append(customDelimeter).ToArray();
+            return DELIMETERS.Concat(customDelimeters).ToArray();
         }
 
         private static PreParsedInput PreParseInput(string inputStr)
@@ -60,15 +60,21 @@ namespace R365.StringCalculator.Services
             Match matchSingleCharacterDelimeter = INPUT_PARSING_REGEXP_SINGLE_CHAR_DELIMETER.Match(inputStr);
             if (matchSingleCharacterDelimeter.Success)
             {
-                result.CustomDelimeter = matchSingleCharacterDelimeter.Groups[DELIMETER_GROUP_NAME].Value;
+                result.CustomDelimeters = new string[] { matchSingleCharacterDelimeter.Groups[DELIMETER_GROUP_NAME].Value };
                 result.NumbersString = matchSingleCharacterDelimeter.Groups[INPUT_NUMBERS_GROUP_NAME].Value;
             }
             else
             {
-                Match matchManyCharacterDelimeter = INPUT_PARSING_REGEXP_MANY_CHARS_DELIMETER.Match(inputStr);
+                Match matchManyCharacterDelimeter = INPUT_PARSING_REGEXP_MANY_DELIMETERS.Match(inputStr);
                 if (matchManyCharacterDelimeter.Success)
                 {
-                    result.CustomDelimeter = matchManyCharacterDelimeter.Groups[DELIMETER_GROUP_NAME].Value;
+                    // string with a list of delimeters in a format "[{delimiter1}][{delimiter2}]..[{delimiterN}]"
+                    string delimetersString = matchManyCharacterDelimeter.Groups[DELIMETER_GROUP_NAME].Value;
+                    // split it to individual delimeters
+                    // option StringSplitOptions.RemoveEmptyEntries is used to remove empty strings
+                    string[] delimeters = delimetersString.Split(new char[] { '[', ']' }, StringSplitOptions.RemoveEmptyEntries);
+
+                    result.CustomDelimeters = delimeters;
                     result.NumbersString = matchManyCharacterDelimeter.Groups[INPUT_NUMBERS_GROUP_NAME].Value;
                 }
                 else
@@ -80,11 +86,11 @@ namespace R365.StringCalculator.Services
         }
 
         /// <summary>
-        /// Inner class representing pre-parsed input format that divides user input into Custom Delimeter and a string containing input numbers
+        /// Inner class representing pre-parsed input format that divides user input into a list of Custom Delimeters and a string containing input numbers
         /// </summary>
         class PreParsedInput
         {
-            public string CustomDelimeter { get; set; }
+            public string[] CustomDelimeters { get; set; }
             public string NumbersString { get; set; }
         }
     }

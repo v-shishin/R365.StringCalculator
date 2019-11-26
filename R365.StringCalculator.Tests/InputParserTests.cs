@@ -72,11 +72,14 @@ namespace R365.StringCalculator.Tests
         }
 
         [Theory]
+        //single delimeter
         [InlineData("//[###]\n1###2###3", 1, 2, 3)] // special character
         [InlineData("//[123]\n112321233", 1, 2, 3)] // numeric character
         [InlineData("//[abc]\n1abc2abc3", 1, 2, 3)] // alphabet character
         [InlineData("//[1$a]\n11$a21$a3", 1, 2, 3)] // mix of formats
-        public void ParseNumbers_ManyCharsDelimeterSpecifiedInInputString_ReturnCollectionWithCorrectNumbers(string input, params int[] expectedNumbers)
+        //many delimeters
+        [InlineData("//[*][aa][123][$a1]\n1*2aa31234$a15", 1, 2, 3, 4, 5)]
+        public void ParseNumbers_OneOrMoreStringDelimetersSpecifiedInInputString_ReturnCollectionWithCorrectNumbers(string input, params int[] expectedNumbers)
         {
             var parser = new InputParser();
             var result = parser.ParseNumbers(input);
