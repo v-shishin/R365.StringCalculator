@@ -1,7 +1,5 @@
-using System;
 using Xunit;
 using R365.StringCalculator.Services;
-using System.Linq;
 
 namespace R365.StringCalculator.Tests
 {
@@ -43,6 +41,30 @@ namespace R365.StringCalculator.Tests
         [InlineData("1\n2", 1, 2)]
         [InlineData("1\n2,3", 1, 2, 3)]
         public void ParseNumbers_UseAlternativeNewLineDelimeter_ReturnCollectionWithCorrectNumbers(string input, params int[] expectedNumbers)
+        {
+            var parser = new InputParser();
+            var result = parser.ParseNumbers(input);
+            TestHelpers.CollectionsAreEqual(expectedNumbers, result);
+        }
+
+        [Theory]
+        [InlineData("//#\n1#2#3", 1, 2, 3)] // special character
+        [InlineData("//3\n13234", 1, 2, 4)] // numeric character
+        [InlineData("//a\n1a2a3", 1, 2, 3)] // alphabet character
+        [InlineData("//$\n1,2\n3$4", 1, 2, 3, 4)] // mix of formats
+        public void ParseNumbers_DelimeterSpecifiedInInputString_ReturnCollectionWithCorrectNumbers(string input, params int[] expectedNumbers)
+        {
+            var parser = new InputParser();
+            var result = parser.ParseNumbers(input);
+            TestHelpers.CollectionsAreEqual(expectedNumbers, result);
+        }
+
+        [Theory]
+        [InlineData("//#$\n1#$2#$3", 0,0)] // special character
+        [InlineData("//34\n1342345", 0, 1342345)] // numeric character
+        [InlineData("//ab\n1ab2ab3", 0,0)] // alphabet character
+        [InlineData("//$1a\n1$1a2$1a3", 0,0)] // mix of formats
+        public void ParseNumbers_DelimeterSpecifiedInInputStringHasMoreThanOneCharacter_IgnoresDelimeter(string input, params int[] expectedNumbers)
         {
             var parser = new InputParser();
             var result = parser.ParseNumbers(input);
